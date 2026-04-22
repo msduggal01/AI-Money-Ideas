@@ -1,0 +1,64 @@
+# .github/workflows/ai-money-ideas-daily.yml
+name: AI Money Ideas Daily Report
+
+on:
+  schedule:
+    - cron: '30 0 * * *'   # 12:30 AM UTC = 6:00 AM IST
+  workflow_dispatch:         # lets you trigger manually from GitHub UI
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger AI Money Ideas Agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          # 1. Create a session
+          SESSION=$(curl -s -X POST https://api.anthropic.com/v1/sessions \
+            -H "x-api-key: $ANTHROPIC_API_KEY" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "anthropic-beta: managed-agents-2026-04-01" \
+            -H "content-type: application/json" \
+            -d '{
+              "agent": "'"$AGENT_ID"'",
+              "environment_id": "'"$ENVIRONMENT_ID"'",
+              "vault_ids": ["'"$VAULT_ID"'"],
+              "title": "AI Money Ideas — Daily Run"
+            }')
+          SESSION_ID=$(echo "$SESSION" | jq -r '.id')
+          echo "Session created: $SESSION_ID"
+
+          # 2. Send the trigger message
+          curl -s -X POST "https://api.anthropic.com/v1/sessions/$SESSION_ID/events" \
+            -H "x-api-key: $ANTHROPIC_API_KEY" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "anthropic-beta: managed-agents-2026-04-01" \
+            -H "content-type: application/json" \
+            -d '{
+              "events": [{
+                "type": "user.message",
+                "content": [{"type": "text", "text": "Run today'\''s AI Money Ideas report — hunt the past 24 hours, find the best solopreneur AI stories, build Phoenix Products for each, and post the full report to #ai-money-ideas on Slack."}]
+              }]
+            }'
+          echo "Trigger message sent."
+
+          # 3. Poll until session goes idle (agent finished)
+          for i in $(seq 1 60); do
+            sleep 30
+            STATUS=$(curl -s "https://api.anthropic.com/v1/sessions/$SESSION_ID" \
+              -H "x-api-key: $ANTHROPIC_API_KEY" \
+              -H "anthropic-version: 2023-06-01" \
+              -H "anthropic-beta: managed-agents-2026-04-01" \
+              | jq -r '.status')
+            echo "[$i] Session status: $STATUS"
+            if [ "$STATUS" = "idle" ] || [ "$STATUS" = "terminated" ]; then
+              echo "Agent completed. Report should be in #ai-money-ideas."
+              break
+            fi
+          done
+        env:
+          AGENT_ID: "agent_011CaKDGZjfDnd76AgA3wGMv"
+          ENVIRONMENT_ID: "env_01DEpoEcM7YrLZotTs3AHEct"
+          VAULT_ID: "vlt_011Ca1chDCvs1eY521YAdFQU"
