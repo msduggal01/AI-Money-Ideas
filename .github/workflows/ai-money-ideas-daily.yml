@@ -4,7 +4,7 @@ name: AI Money Ideas Daily Report
 on:
   schedule:
     - cron: '30 0 * * *'   # 12:30 AM UTC = 6:00 AM IST
-  workflow_dispatch:         # lets you trigger manually from GitHub UI
+  workflow_dispatch:
 
 jobs:
   run-agent:
@@ -14,6 +14,9 @@ jobs:
       - name: Trigger AI Money Ideas Agent
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AGENT_ID: "agent_011CaKDGZjfDnd76AgA3wGMv"
+          ENVIRONMENT_ID: "env_01DEpoEcM7YrLZotTs3AHEct"
+          VAULT_ID: "vlt_011Ca1chDCvs1eY521YAdFQU"
         run: |
           # 1. Create a session
           SESSION=$(curl -s -X POST https://api.anthropic.com/v1/sessions \
@@ -58,7 +61,3 @@ jobs:
               break
             fi
           done
-        env:
-          AGENT_ID: "agent_011CaKDGZjfDnd76AgA3wGMv"
-          ENVIRONMENT_ID: "env_01DEpoEcM7YrLZotTs3AHEct"
-          VAULT_ID: "vlt_011Ca1chDCvs1eY521YAdFQU"
