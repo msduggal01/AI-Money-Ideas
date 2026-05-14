@@ -1,22 +1,18 @@
 # .github/workflows/ai-money-ideas-daily.yml
 name: AI Money Ideas Daily Report
-
 on:
   schedule:
-    - cron: '30 0 * * *'   # 12:30 AM UTC = 6:00 AM IST
+    - cron: '30 3 * * *'   # 3:30 AM UTC = 9:00 AM IST
   workflow_dispatch:
-
 jobs:
   run-agent:
     runs-on: ubuntu-latest
-
     steps:
       - name: Trigger AI Money Ideas Agent
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          AGENT_ID: "agent_011CaKDGZjfDnd76AgA3wGMv"
+          AGENT_ID: "agent_01WaLmZBvEG5qJ8PfQi9yLsT"
           ENVIRONMENT_ID: "env_01DEpoEcM7YrLZotTs3AHEct"
-          VAULT_ID: "vlt_011Ca1chDCvs1eY521YAdFQU"
         run: |
           # 1. Create a session
           SESSION=$(curl -s -X POST https://api.anthropic.com/v1/sessions \
@@ -27,7 +23,6 @@ jobs:
             -d '{
               "agent": "'"$AGENT_ID"'",
               "environment_id": "'"$ENVIRONMENT_ID"'",
-              "vault_ids": ["'"$VAULT_ID"'"],
               "title": "AI Money Ideas — Daily Run"
             }')
           SESSION_ID=$(echo "$SESSION" | jq -r '.id')
